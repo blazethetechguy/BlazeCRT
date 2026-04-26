@@ -1,0 +1,24 @@
+name: Build BlazeCRT
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Build Plugin (Release x64)
+      run: msbuild BlazeCRT/Win/BlazeCRT.vcxproj /p:Configuration=Release /p:Platform=x64
+
+    - name: Upload .aex Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BlazeCRT_Plugin
+        path: BlazeCRT/Win/x64/Release/BlazeCRT.aex
