@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -17,8 +19,12 @@ jobs:
     - name: Build Plugin (Release x64)
       run: msbuild BlazeCRT/Win/BlazeCRT.vcxproj /p:Configuration=Release /p:Platform=x64
 
-    - name: Upload .aex Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: BlazeCRT_Plugin
-        path: BlazeCRT/Win/x64/Release/BlazeCRT.aex
+    - name: Commit Compiled Plugin to Repo
+      run: |
+        mkdir -p Builds
+        cp BlazeCRT/Win/x64/Release/BlazeCRT.aex Builds/BlazeCRT.aex
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add Builds/BlazeCRT.aex
+        git commit -m "Auto-compiled BlazeCRT.aex" || echo "No changes to commit"
+        git push
