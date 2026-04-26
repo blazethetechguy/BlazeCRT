@@ -106,9 +106,9 @@ CRTRenderFunc8 (
 		}
 
 		outP->alpha	= inP->alpha;
-		outP->red	= MIN((inP->red * rMultiplier * scanMult), PF_MAX_CHAN8);
-		outP->green	= MIN((inP->green * gMultiplier * scanMult), PF_MAX_CHAN8);
-		outP->blue	= MIN((inP->blue * bMultiplier * scanMult), PF_MAX_CHAN8);
+		outP->red	= (A_u_char)MIN((inP->red * rMultiplier * scanMult), PF_MAX_CHAN8);
+		outP->green	= (A_u_char)MIN((inP->green * gMultiplier * scanMult), PF_MAX_CHAN8);
+		outP->blue	= (A_u_char)MIN((inP->blue * bMultiplier * scanMult), PF_MAX_CHAN8);
 	}
 	return err;
 }
@@ -146,9 +146,9 @@ CRTRenderFunc16 (
 		}
 
 		outP->alpha	= inP->alpha;
-		outP->red	= MIN((inP->red * rMultiplier * scanMult), PF_MAX_CHAN16);
-		outP->green	= MIN((inP->green * gMultiplier * scanMult), PF_MAX_CHAN16);
-		outP->blue	= MIN((inP->blue * bMultiplier * scanMult), PF_MAX_CHAN16);
+		outP->red	= (A_u_short)MIN((inP->red * rMultiplier * scanMult), PF_MAX_CHAN16);
+		outP->green	= (A_u_short)MIN((inP->green * gMultiplier * scanMult), PF_MAX_CHAN16);
+		outP->blue	= (A_u_short)MIN((inP->blue * bMultiplier * scanMult), PF_MAX_CHAN16);
 	}
 	return err;
 }
