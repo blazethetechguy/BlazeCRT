@@ -17,15 +17,12 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1
 
     - name: Build Plugin (Release x64)
+      env:
+        AE_PLUGIN_BUILD_DIR: ..\..\Builds
       run: msbuild BlazeCRT/Win/BlazeCRT.vcxproj /p:Configuration=Release /p:Platform=x64
 
     - name: Commit Compiled Plugin to Repo
       run: |
-        mkdir Builds -Force
-        echo "=== ALL GENERATED FILES ==="
-        dir .\BlazeCRT\Win\ /s
-        echo "=== SEARCHING FOR COMPILED PLUGIN ==="
-        Get-ChildItem -Path . -Include "*.aex", "*.dll" -Recurse | Copy-Item -Destination Builds/BlazeCRT.aex
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add Builds/
