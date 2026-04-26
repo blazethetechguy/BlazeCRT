@@ -22,10 +22,13 @@ jobs:
     - name: Commit Compiled Plugin to Repo
       run: |
         mkdir Builds -Force
-        Get-ChildItem -Path . -Filter "*.aex" -Recurse | Copy-Item -Destination Builds/BlazeCRT.aex
+        echo "=== ALL GENERATED FILES ==="
+        dir .\BlazeCRT\Win\ /s
+        echo "=== SEARCHING FOR COMPILED PLUGIN ==="
+        Get-ChildItem -Path . -Include "*.aex", "*.dll" -Recurse | Copy-Item -Destination Builds/BlazeCRT.aex
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add Builds/BlazeCRT.aex
+        git add Builds/
         git commit -m "Auto-compiled BlazeCRT.aex"
         if ($LASTEXITCODE -eq 0) { git push } else { echo "No changes to commit" }
       shell: powershell
