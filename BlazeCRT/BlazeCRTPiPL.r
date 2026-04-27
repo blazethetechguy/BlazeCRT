@@ -31,7 +31,7 @@ resource 'PiPL' (16000) {
 #endif
 		/* [6] */
 		AE_PiPL_Version {
-			2,
+			3,
 			0
 		},
 		/* [7] */

@@ -31,7 +31,7 @@ typedef struct {
 TableString		g_strs[StrID_NUMTYPES] = {
 	StrID_NONE,						"",
 	StrID_Name,						"BlazeCRT",
-	StrID_Description,				"Hardware-Accelerated CRT Suite by Blaze.\rSub-16ms latency guaranteed.",
+	StrID_Description,				"Hyper-Optimized CRT Engine by Blaze.\rSub-16ms latency guaranteed.",
 	StrID_Gain_Param_Name,			"Gain",
 	StrID_Color_Param_Name,			"Color",
 };
@@ -40,5 +40,4 @@ TableString		g_strs[StrID_NUMTYPES] = {
 char	*GetStringPtr(int strNum)
 {
 	return g_strs[strNum].str;
-}
-	
+}
