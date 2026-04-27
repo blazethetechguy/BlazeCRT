@@ -148,7 +148,7 @@
       </DataExecutionPrevention>
       <ImportLibrary>$(IntDir)/$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
-    <AdditionalDependencies>OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+    </Link>
     <Bscmake>
       <OutputFile>$(IntDir)$(TargetName).bsc</OutputFile>
     </Bscmake>
@@ -200,7 +200,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImportLibrary>$(IntDir)/$(TargetName).lib</ImportLibrary>
-    <AdditionalDependencies>OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+    </Link>
     <Bscmake>
       <OutputFile>$(IntDir)$(TargetName).bsc</OutputFile>
     </Bscmake>
@@ -255,7 +255,7 @@
       </DataExecutionPrevention>
       <ImportLibrary>$(IntDir)/$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
-    <AdditionalDependencies>OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+    </Link>
     <Bscmake>
       <OutputFile>$(IntDir)$(TargetName).bsc</OutputFile>
     </Bscmake>
@@ -308,7 +308,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <ImportLibrary>$(IntDir)/$(TargetName).lib</ImportLibrary>
-    <AdditionalDependencies>OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+    </Link>
     <Bscmake>
       <OutputFile>$(IntDir)$(TargetName).bsc</OutputFile>
     </Bscmake>
