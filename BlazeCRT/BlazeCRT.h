@@ -32,27 +32,16 @@ typedef short int			int16;
 #include "AEGP_SuiteHandler.h"
 
 #include "BlazeCRT_Strings.h"
-#include "BlazeCRT_OpenCL.h"
 
 /* Versioning information */
 
 #define	MAJOR_VERSION	2
-#define	MINOR_VERSION	0
+#define	MINOR_VERSION	1
 #define	BUG_VERSION		0
 #define	STAGE_VERSION	PF_Stage_DEVELOP
 #define	BUILD_VERSION	1
 
-
-/* Parameter defaults */
-
-#define	BLAZECRT_SCANLINE_MIN		0
-#define	BLAZECRT_SCANLINE_MAX		100
-#define	BLAZECRT_SCANLINE_DFLT		50
-
-#define BLAZECRT_RGB_SPLIT_MIN      0
-#define BLAZECRT_RGB_SPLIT_MAX      100
-#define BLAZECRT_RGB_SPLIT_DFLT     50
-
+/* Parameter indices */
 enum {
 	BLAZECRT_INPUT = 0,
 	BLAZECRT_SCANLINE_AMOUNT,
@@ -67,10 +56,10 @@ enum {
 	BLAZECRT_BLOOM_HQ,
 	BLAZECRT_VIGNETTE_AMOUNT,
 	BLAZECRT_CURVATURE_AMOUNT,
-	BLAZECRT_ENABLE_GPU,
 	BLAZECRT_NUM_PARAMS
 };
 
+/* Disk IDs (stable, never change these) */
 enum {
 	SCANLINE_DISK_ID = 1,
 	SCANLINE_FREQ_DISK_ID,
@@ -83,13 +72,34 @@ enum {
 	BLOOM_DISK_ID,
 	BLOOM_HQ_DISK_ID,
 	VIGNETTE_DISK_ID,
-	CURVATURE_DISK_ID,
-	GPU_DISK_ID
+	CURVATURE_DISK_ID
 };
 
-typedef struct CRTInfo{
-	OCL_CRTParams ocl_params;
-	bool enable_gpu;
+/* Refcon passed to iterate callbacks - must be READ-ONLY during render */
+typedef struct CRTInfo {
+	/* Effect parameters */
+	float scanline_op;
+	float scanline_freq;
+	float scanline_soft;
+	float rgb_amt;
+	int   rgb_mode;
+	float chrom_abb;
+	float grain_amt;
+	int   grain_size;
+	float bloom_amt;
+	int   bloom_hq;
+	float vignette_amt;
+	float curvature_amt;
+
+	/* Frame info */
+	int   width;
+	int   height;
+	A_long rowbytes_in;
+	unsigned int frame_count;
+
+	/* Pointer to full input layer (for neighbor sampling) */
+	void* in_data8;
+	void* in_data16;
 } CRTInfo;
 
 extern "C" {
