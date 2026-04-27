@@ -47,6 +47,7 @@ enum {
 	BLAZECRT_SCANLINE_AMOUNT,
 	BLAZECRT_SCANLINE_FREQ,
 	BLAZECRT_SCANLINE_SOFT,
+	BLAZECRT_SCANLINE_SPEED,
 	BLAZECRT_RGB_AMOUNT,
 	BLAZECRT_RGB_MODE,
 	BLAZECRT_CHROM_ABB,
@@ -64,6 +65,7 @@ enum {
 	SCANLINE_DISK_ID = 1,
 	SCANLINE_FREQ_DISK_ID,
 	SCANLINE_SOFT_DISK_ID,
+	SCANLINE_SPEED_DISK_ID,
 	RGB_DISK_ID,
 	RGB_MODE_DISK_ID,
 	CHROM_ABB_DISK_ID,
@@ -81,6 +83,7 @@ typedef struct CRTInfo {
 	float scanline_op;
 	float scanline_freq;
 	float scanline_soft;
+	float scanline_speed;
 	float rgb_amt;
 	int   rgb_mode;
 	float chrom_abb;
@@ -92,6 +95,7 @@ typedef struct CRTInfo {
 	float curvature_amt;
 
 	/* Frame info */
+	float time;
 	int   width;
 	int   height;
 	A_long rowbytes_in;

@@ -97,7 +97,9 @@ CRTRenderFunc8(void* refcon, A_long xL, A_long yL, PF_Pixel8* inP, PF_Pixel8* ou
 	/* --- Scanlines --- */
 	if (gi->scanline_op > 0.0f) {
 		float freq = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
-		float phase = fmodf(srcY, freq) / freq;
+		float val = y + gi->time * gi->scanline_speed * 20.0f;
+		float phase = fmodf(val, freq) / freq;
+		if (phase < 0.0f) phase += 1.0f;
 		float hard  = (phase < 0.5f) ? 1.0f : 0.0f;
 		float soft  = cosf(phase * 6.28318f) * 0.5f + 0.5f;
 		float pattern  = hard * (1.0f - gi->scanline_soft) + soft * gi->scanline_soft;
@@ -206,7 +208,9 @@ CRTRenderFunc16(void* refcon, A_long xL, A_long yL, PF_Pixel16* inP, PF_Pixel16*
 
 	if (gi->scanline_op > 0.0f) {
 		float freq  = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
-		float phase = fmodf(srcY, freq) / freq;
+		float val = y + gi->time * gi->scanline_speed * 20.0f;
+		float phase = fmodf(val, freq) / freq;
+		if (phase < 0.0f) phase += 1.0f;
 		float hard  = (phase < 0.5f) ? 1.0f : 0.0f;
 		float soft  = cosf(phase * 6.28318f) * 0.5f + 0.5f;
 		float scanMult = 1.0f - gi->scanline_op * (1.0f - (hard * (1.0f - gi->scanline_soft) + soft * gi->scanline_soft));
@@ -291,6 +295,8 @@ ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Scanline Softness", 0, 100, 0, 100, 20,  PF_Precision_HUNDREDTHS, 0, 0, SCANLINE_SOFT_DISK_ID);
 	AEFX_CLR_STRUCT(def);
+	PF_ADD_FLOAT_SLIDERX("Scanline Speed",  -100, 100, -100, 100, 0,  PF_Precision_HUNDREDTHS, 0, 0, SCANLINE_SPEED_DISK_ID);
+	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("RGB Split Amount",  0, 100, 0, 100, 50,  PF_Precision_HUNDREDTHS, 0, 0, RGB_DISK_ID);
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_POPUP("RGB Split Mode", 3, 1, "Subpixel|Horizontal|Radial", RGB_MODE_DISK_ID);
@@ -326,6 +332,7 @@ Render(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_Layer
 	gi.scanline_op   = (float)(params[BLAZECRT_SCANLINE_AMOUNT]->u.fs_d.value / 100.0);
 	gi.scanline_freq = (float)(params[BLAZECRT_SCANLINE_FREQ]->u.fs_d.value);
 	gi.scanline_soft = (float)(params[BLAZECRT_SCANLINE_SOFT]->u.fs_d.value / 100.0);
+	gi.scanline_speed= (float)(params[BLAZECRT_SCANLINE_SPEED]->u.fs_d.value);
 	gi.rgb_amt       = (float)(params[BLAZECRT_RGB_AMOUNT]->u.fs_d.value / 100.0);
 	gi.rgb_mode      = params[BLAZECRT_RGB_MODE]->u.pd.value - 1;
 	gi.chrom_abb     = (float)(params[BLAZECRT_CHROM_ABB]->u.fs_d.value / 100.0);
@@ -339,6 +346,7 @@ Render(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_Layer
 	gi.width       = output->width;
 	gi.height      = output->height;
 	gi.rowbytes_in = params[BLAZECRT_INPUT]->u.ld.rowbytes;
+	gi.time        = (float)((double)in_data->current_time / (double)in_data->time_scale);
 	gi.frame_count = (unsigned int)(in_data->current_time / in_data->time_step);
 	gi.in_data8    = (void*)params[BLAZECRT_INPUT]->u.ld.data;
 	gi.in_data16   = (void*)params[BLAZECRT_INPUT]->u.ld.data;
