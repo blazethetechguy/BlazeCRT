@@ -82,7 +82,7 @@ static void ProcessRow8(const CRTInfo* gi, int y) {
 			float freq = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
 			float dx = x - gi->anchor_x, dy = y - gi->anchor_y;
 			float rot_y = dx * gi->scan_sin + dy * gi->scan_cos + gi->anchor_y;
-			float val = rot_y + (gi->scanline_phase / 360.0f) * freq;
+			float val = rot_y + (gi->scanline_phase / 360.0f) * freq + (gi->time * gi->scanline_speed * 50.0f);
 			float phase = fmodf(val, freq) / freq;
 			if (phase < 0.0f) phase += 1.0f;
 			float hard = (phase < 0.5f) ? 1.0f : 0.0f;
@@ -92,7 +92,7 @@ static void ProcessRow8(const CRTInfo* gi, int y) {
 		}
 
 		if (gi->hum_intensity > 0.0f) {
-			float hum_y = y * 0.01f / gi->hum_width + gi->time * gi->hum_speed;
+			float hum_y = ((float)y / H) * (100.0f / gi->hum_width) * 6.2831853f - gi->time * gi->hum_speed * 6.2831853f;
 			rgba = simd_mul_scalar(rgba, 1.0f - gi->hum_intensity * (fast_sin(hum_y) * 0.5f + 0.5f));
 		}
 
@@ -199,7 +199,7 @@ static void ProcessRow16(const CRTInfo* gi, int y) {
 			float freq = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
 			float dx = x - gi->anchor_x, dy = y - gi->anchor_y;
 			float rot_y = dx * gi->scan_sin + dy * gi->scan_cos + gi->anchor_y;
-			float val = rot_y + (gi->scanline_phase / 360.0f) * freq;
+			float val = rot_y + (gi->scanline_phase / 360.0f) * freq + (gi->time * gi->scanline_speed * 50.0f);
 			float phase = fmodf(val, freq) / freq;
 			if (phase < 0.0f) phase += 1.0f;
 			float hard = (phase < 0.5f) ? 1.0f : 0.0f;
@@ -209,7 +209,7 @@ static void ProcessRow16(const CRTInfo* gi, int y) {
 		}
 
 		if (gi->hum_intensity > 0.0f) {
-			float hum_y = y * 0.01f / gi->hum_width + gi->time * gi->hum_speed;
+			float hum_y = ((float)y / H) * (100.0f / gi->hum_width) * 6.2831853f - gi->time * gi->hum_speed * 6.2831853f;
 			rgba = simd_mul_scalar(rgba, 1.0f - gi->hum_intensity * (fast_sin(hum_y) * 0.5f + 0.5f));
 		}
 
@@ -285,6 +285,7 @@ static PF_Err ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef*
 	AEFX_CLR_STRUCT(def); PF_ADD_ANGLE("Scanline Phase", 0, SCANLINE_PHASE_DISK_ID);
 	AEFX_CLR_STRUCT(def); PF_ADD_ANGLE("Scanline Rotation", 0, SCANLINE_ROTATION_DISK_ID);
 	AEFX_CLR_STRUCT(def); PF_ADD_POINT("Scanline Anchor", 50, 50, 0, SCANLINE_ANCHOR_DISK_ID);
+	AEFX_CLR_STRUCT(def); PF_ADD_FLOAT_SLIDERX("Scanline Speed", -10, 10, -10, 10, 1, PF_Precision_HUNDREDTHS, 0, 0, SCANLINE_SPEED_DISK_ID);
 	AEFX_CLR_STRUCT(def); PF_ADD_FLOAT_SLIDERX("Flicker Amount", 0, 100, 0, 100, 0, PF_Precision_HUNDREDTHS, 0, 0, FLICKER_AMOUNT_DISK_ID);
 	AEFX_CLR_STRUCT(def); PF_ADD_FLOAT_SLIDERX("Flicker Speed", 0, 10, 0, 10, 1, PF_Precision_HUNDREDTHS, 0, 0, FLICKER_SPEED_DISK_ID);
 	AEFX_CLR_STRUCT(def); PF_ADD_FLOAT_SLIDERX("Hum Bar Intensity", 0, 100, 0, 100, 0, PF_Precision_HUNDREDTHS, 0, 0, HUM_INTENSITY_DISK_ID);
@@ -325,6 +326,7 @@ static PF_Err Render(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* para
 	gi.scanline_rotation = (float)params[BLAZECRT_SCANLINE_ROTATION]->u.ad.value / 65536.0f;
 	gi.anchor_x = (float)params[BLAZECRT_SCANLINE_ANCHOR]->u.td.x_value / 65536.0f;
 	gi.anchor_y = (float)params[BLAZECRT_SCANLINE_ANCHOR]->u.td.y_value / 65536.0f;
+	gi.scanline_speed = (float)(params[BLAZECRT_SCANLINE_SPEED]->u.fs_d.value);
 	gi.flicker_amount = (float)(params[BLAZECRT_FLICKER_AMOUNT]->u.fs_d.value / 100.0);
 	gi.flicker_speed = (float)(params[BLAZECRT_FLICKER_SPEED]->u.fs_d.value);
 	gi.hum_intensity = (float)(params[BLAZECRT_HUM_INTENSITY]->u.fs_d.value / 100.0);

@@ -64,6 +64,7 @@ enum {
 	BLAZECRT_SCANLINE_PHASE,       /* Angle dial */
 	BLAZECRT_SCANLINE_ROTATION,    /* Angle dial */
 	BLAZECRT_SCANLINE_ANCHOR,      /* Point control */
+	BLAZECRT_SCANLINE_SPEED,       /* Float slider */
 	BLAZECRT_FLICKER_AMOUNT,
 	BLAZECRT_FLICKER_SPEED,
 	BLAZECRT_HUM_INTENSITY,
@@ -110,6 +111,7 @@ enum {
 	SCANLINE_PHASE_DISK_ID,
 	SCANLINE_ROTATION_DISK_ID,
 	SCANLINE_ANCHOR_DISK_ID,
+	SCANLINE_SPEED_DISK_ID,
 	FLICKER_AMOUNT_DISK_ID,
 	FLICKER_SPEED_DISK_ID,
 	HUM_INTENSITY_DISK_ID,
@@ -152,6 +154,7 @@ typedef struct CRTInfo {
 	float scanline_phase;
 	float scanline_rotation;
 	float anchor_x, anchor_y;
+	float scanline_speed;
 	float flicker_amount;
 	float flicker_speed;
 	float hum_intensity;
