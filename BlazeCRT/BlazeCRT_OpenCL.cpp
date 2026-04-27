@@ -1,5 +1,6 @@
 #include "BlazeCRT_OpenCL.h"
 #include "BlazeCRT_OpenCL_Kernel.h"
+#define CL_TARGET_OPENCL_VERSION 120
 #include <CL/cl.h>
 #include <stdio.h>
 #include <stdlib.h>
