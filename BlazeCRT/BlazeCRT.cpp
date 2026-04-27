@@ -274,6 +274,7 @@ GlobalSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_
 	out_data->out_flags  = PF_OutFlag_DEEP_COLOR_AWARE |
 	                       PF_OutFlag_PIX_INDEPENDENT  |
 	                       PF_OutFlag_NON_PARAM_VARY;    /* grain varies every frame */
+	out_data->out_flags2 = PF_OutFlag2_SUPPORTS_THREADED_RENDERING;
 	return PF_Err_NONE;
 }
 
