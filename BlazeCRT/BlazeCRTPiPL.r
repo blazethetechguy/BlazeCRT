@@ -17,7 +17,7 @@ resource 'PiPL' (16000) {
 		},
 		/* [3] */
 		Category {
-			"Sample Plug-ins"
+			"Blaze Plugins"
 		},
 #ifdef AE_OS_WIN
     #if defined(AE_PROC_INTELx64)
@@ -53,7 +53,7 @@ resource 'PiPL' (16000) {
 
 		},
 		AE_Effect_Global_OutFlags_2 {
-		0x00000000
+		0x02000000
 		},
 		/* [11] */
 		AE_Effect_Match_Name {

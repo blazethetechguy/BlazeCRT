@@ -31,7 +31,7 @@ typedef struct {
 TableString		g_strs[StrID_NUMTYPES] = {
 	StrID_NONE,						"",
 	StrID_Name,						"BlazeCRT",
-	StrID_Description,				"An empty (skeletal, if you will) effect sample,\r for your modifying pleasure.\rCopyright 2007-2023 Adobe Inc.",
+	StrID_Description,				"Hardware-Accelerated CRT Suite by Blaze.\rSub-16ms latency guaranteed.",
 	StrID_Gain_Param_Name,			"Gain",
 	StrID_Color_Param_Name,			"Color",
 };
