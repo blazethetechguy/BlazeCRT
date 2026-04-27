@@ -97,7 +97,13 @@ CRTRenderFunc8(void* refcon, A_long xL, A_long yL, PF_Pixel8* inP, PF_Pixel8* ou
 	/* --- Scanlines --- */
 	if (gi->scanline_op > 0.0f) {
 		float freq = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
-		float val = y + gi->time * gi->scanline_speed * 20.0f;
+		float rad = gi->scanline_rotation * 0.0174533f;
+		float s = sinf(rad);
+		float c = cosf(rad);
+		float dx = x - gi->anchor_x;
+		float dy = y - gi->anchor_y;
+		float rot_y = dx * s + dy * c + gi->anchor_y;
+		float val = rot_y + (gi->scanline_phase / 360.0f) * freq;
 		float phase = fmodf(val, freq) / freq;
 		if (phase < 0.0f) phase += 1.0f;
 		float hard  = (phase < 0.5f) ? 1.0f : 0.0f;
@@ -208,7 +214,13 @@ CRTRenderFunc16(void* refcon, A_long xL, A_long yL, PF_Pixel16* inP, PF_Pixel16*
 
 	if (gi->scanline_op > 0.0f) {
 		float freq  = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
-		float val = y + gi->time * gi->scanline_speed * 20.0f;
+		float rad = gi->scanline_rotation * 0.0174533f;
+		float s = sinf(rad);
+		float c = cosf(rad);
+		float dx = x - gi->anchor_x;
+		float dy = y - gi->anchor_y;
+		float rot_y = dx * s + dy * c + gi->anchor_y;
+		float val = rot_y + (gi->scanline_phase / 360.0f) * freq;
 		float phase = fmodf(val, freq) / freq;
 		if (phase < 0.0f) phase += 1.0f;
 		float hard  = (phase < 0.5f) ? 1.0f : 0.0f;
@@ -289,13 +301,24 @@ ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_
 	PF_ParamDef def;
 
 	AEFX_CLR_STRUCT(def);
+	PF_ADD_TOPIC("Scanlines", SCANLINE_GROUP_START_DISK_ID);
+	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Scanline Opacity",  0, 100, 0, 100, 50,  PF_Precision_HUNDREDTHS, 0, 0, SCANLINE_DISK_ID);
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Scanline Frequency",1,   8, 1,   8,  3,  PF_Precision_HUNDREDTHS, 0, 0, SCANLINE_FREQ_DISK_ID);
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Scanline Softness", 0, 100, 0, 100, 20,  PF_Precision_HUNDREDTHS, 0, 0, SCANLINE_SOFT_DISK_ID);
 	AEFX_CLR_STRUCT(def);
-	PF_ADD_FLOAT_SLIDERX("Scanline Speed",  -100, 100, -100, 100, 0,  PF_Precision_HUNDREDTHS, 0, 0, SCANLINE_SPEED_DISK_ID);
+	PF_ADD_ANGLE("Scanline Phase", 0, SCANLINE_PHASE_DISK_ID);
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_ANGLE("Scanline Rotation", 0, SCANLINE_ROTATION_DISK_ID);
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_POINT("Scanline Anchor", 50, 50, 0, SCANLINE_ANCHOR_DISK_ID);
+	AEFX_CLR_STRUCT(def);
+	PF_END_TOPIC(SCANLINE_GROUP_END_DISK_ID);
+
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_TOPIC("Aberrations", ABERRATIONS_GROUP_START_DISK_ID);
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("RGB Split Amount",  0, 100, 0, 100, 50,  PF_Precision_HUNDREDTHS, 0, 0, RGB_DISK_ID);
 	AEFX_CLR_STRUCT(def);
@@ -303,9 +326,19 @@ ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Chromatic Aberration", 0, 100, 0, 100, 0, PF_Precision_HUNDREDTHS, 0, 0, CHROM_ABB_DISK_ID);
 	AEFX_CLR_STRUCT(def);
+	PF_END_TOPIC(ABERRATIONS_GROUP_END_DISK_ID);
+
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_TOPIC("Texture", TEXTURE_GROUP_START_DISK_ID);
+	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Film Grain Amount", 0, 100, 0, 100, 0,   PF_Precision_HUNDREDTHS, 0, 0, GRAIN_DISK_ID);
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_SLIDER("Grain Size", 1, 8, 1, 8, 1, GRAIN_SIZE_DISK_ID);
+	AEFX_CLR_STRUCT(def);
+	PF_END_TOPIC(TEXTURE_GROUP_END_DISK_ID);
+
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_TOPIC("Vignette & Bloom", VIGNETTE_BLOOM_GROUP_START_DISK_ID);
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Phosphor Bloom",    0, 100, 0, 100, 0,   PF_Precision_HUNDREDTHS, 0, 0, BLOOM_DISK_ID);
 	AEFX_CLR_STRUCT(def);
@@ -313,7 +346,14 @@ ParamsSetup(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_
 	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Vignette Amount",   0, 100, 0, 100, 0,   PF_Precision_HUNDREDTHS, 0, 0, VIGNETTE_DISK_ID);
 	AEFX_CLR_STRUCT(def);
+	PF_END_TOPIC(VIGNETTE_BLOOM_GROUP_END_DISK_ID);
+
+	AEFX_CLR_STRUCT(def);
+	PF_ADD_TOPIC("Curvature", CURVATURE_GROUP_START_DISK_ID);
+	AEFX_CLR_STRUCT(def);
 	PF_ADD_FLOAT_SLIDERX("Curvature Amount",  0, 100, 0, 100, 0,   PF_Precision_HUNDREDTHS, 0, 0, CURVATURE_DISK_ID);
+	AEFX_CLR_STRUCT(def);
+	PF_END_TOPIC(CURVATURE_GROUP_END_DISK_ID);
 
 	out_data->num_params = BLAZECRT_NUM_PARAMS;
 	return err;
@@ -332,7 +372,10 @@ Render(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_Layer
 	gi.scanline_op   = (float)(params[BLAZECRT_SCANLINE_AMOUNT]->u.fs_d.value / 100.0);
 	gi.scanline_freq = (float)(params[BLAZECRT_SCANLINE_FREQ]->u.fs_d.value);
 	gi.scanline_soft = (float)(params[BLAZECRT_SCANLINE_SOFT]->u.fs_d.value / 100.0);
-	gi.scanline_speed= (float)(params[BLAZECRT_SCANLINE_SPEED]->u.fs_d.value);
+	gi.scanline_phase= (float)params[BLAZECRT_SCANLINE_PHASE]->u.ad.value / 65536.0f;
+	gi.scanline_rotation = (float)params[BLAZECRT_SCANLINE_ROTATION]->u.ad.value / 65536.0f;
+	gi.anchor_x      = (float)params[BLAZECRT_SCANLINE_ANCHOR]->u.td.x_value / 65536.0f;
+	gi.anchor_y      = (float)params[BLAZECRT_SCANLINE_ANCHOR]->u.td.y_value / 65536.0f;
 	gi.rgb_amt       = (float)(params[BLAZECRT_RGB_AMOUNT]->u.fs_d.value / 100.0);
 	gi.rgb_mode      = params[BLAZECRT_RGB_MODE]->u.pd.value - 1;
 	gi.chrom_abb     = (float)(params[BLAZECRT_CHROM_ABB]->u.fs_d.value / 100.0);
