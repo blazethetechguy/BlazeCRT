@@ -235,18 +235,18 @@ Render (
 	A_long linesL = output->extent_hint.bottom - output->extent_hint.top;
     
     // Map params
-    giP.ocl_params.scanline_op = params[BLAZECRT_SCANLINE_AMOUNT]->u.fs_d.value / 100.0f;
-    giP.ocl_params.scanline_freq = params[BLAZECRT_SCANLINE_FREQ]->u.fs_d.value;
-    giP.ocl_params.scanline_soft = params[BLAZECRT_SCANLINE_SOFT]->u.fs_d.value / 100.0f;
-    giP.ocl_params.rgb_amt = params[BLAZECRT_RGB_AMOUNT]->u.fs_d.value / 100.0f;
+    giP.ocl_params.scanline_op = (float)(params[BLAZECRT_SCANLINE_AMOUNT]->u.fs_d.value / 100.0);
+    giP.ocl_params.scanline_freq = (float)(params[BLAZECRT_SCANLINE_FREQ]->u.fs_d.value);
+    giP.ocl_params.scanline_soft = (float)(params[BLAZECRT_SCANLINE_SOFT]->u.fs_d.value / 100.0);
+    giP.ocl_params.rgb_amt = (float)(params[BLAZECRT_RGB_AMOUNT]->u.fs_d.value / 100.0);
     giP.ocl_params.rgb_mode = params[BLAZECRT_RGB_MODE]->u.pd.value - 1; // Popup is 1-based
-    giP.ocl_params.chrom_abb = params[BLAZECRT_CHROM_ABB]->u.fs_d.value / 100.0f;
-    giP.ocl_params.grain_amt = params[BLAZECRT_GRAIN_AMOUNT]->u.fs_d.value / 100.0f;
+    giP.ocl_params.chrom_abb = (float)(params[BLAZECRT_CHROM_ABB]->u.fs_d.value / 100.0);
+    giP.ocl_params.grain_amt = (float)(params[BLAZECRT_GRAIN_AMOUNT]->u.fs_d.value / 100.0);
     giP.ocl_params.grain_size = params[BLAZECRT_GRAIN_SIZE]->u.sd.value;
-    giP.ocl_params.bloom_amt = params[BLAZECRT_BLOOM_AMOUNT]->u.fs_d.value / 100.0f;
+    giP.ocl_params.bloom_amt = (float)(params[BLAZECRT_BLOOM_AMOUNT]->u.fs_d.value / 100.0);
     giP.ocl_params.bloom_hq = params[BLAZECRT_BLOOM_HQ]->u.bd.value;
-    giP.ocl_params.vignette_amt = params[BLAZECRT_VIGNETTE_AMOUNT]->u.fs_d.value / 100.0f;
-    giP.ocl_params.curvature_amt = params[BLAZECRT_CURVATURE_AMOUNT]->u.fs_d.value / 100.0f;
+    giP.ocl_params.vignette_amt = (float)(params[BLAZECRT_VIGNETTE_AMOUNT]->u.fs_d.value / 100.0);
+    giP.ocl_params.curvature_amt = (float)(params[BLAZECRT_CURVATURE_AMOUNT]->u.fs_d.value / 100.0);
     
     giP.enable_gpu = params[BLAZECRT_ENABLE_GPU]->u.bd.value;
     
