@@ -364,7 +364,9 @@ static PF_Err Render(PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* para
 }
 
 extern "C" DllExport PF_Err PluginDataEntryFunction2(PF_PluginDataPtr inPtr, PF_PluginDataCB2 inPluginDataCallBackPtr, SPBasicSuite* inSPBasicSuitePtr, const char* inHostName, const char* inHostVersion) {
-	return PF_REGISTER_EFFECT_EXT2(inPtr, inPluginDataCallBackPtr, "BlazeCRT", "ADBE BlazeCRT", "Blaze Plugins", AE_RESERVED_INFO, "EffectMain", "https://github.com/blazethetechguy/BlazeCRT");
+	PF_Err result = PF_Err_NONE;
+	result = PF_REGISTER_EFFECT_EXT2(inPtr, inPluginDataCallBackPtr, "BlazeCRT", "ADBE BlazeCRT", "Blaze Plugins", AE_RESERVED_INFO, "EffectMain", "https://github.com/blazethetechguy/BlazeCRT");
+	return result;
 }
 
 PF_Err EffectMain(PF_Cmd cmd, PF_InData* in_data, PF_OutData* out_data, PF_ParamDef* params[], PF_LayerDef* output, void* extra) {

@@ -190,6 +190,7 @@ typedef struct CRTInfo {
 
 	/* ── Buffer pointers (read-only) ── */
 	void* in_data_ptr;
+	void* out_data_ptr;
 } CRTInfo;
 
 extern "C" {
