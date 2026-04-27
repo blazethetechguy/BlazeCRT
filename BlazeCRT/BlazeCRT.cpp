@@ -21,13 +21,11 @@ static inline PF_Pixel16 sample16(const CRTInfo* gi, float sx, float sy) {
 static void ProcessRow8(const CRTInfo* gi, int y) {
 	float W = (float)gi->width, H = (float)gi->height;
 	PF_Pixel8* out_row = (PF_Pixel8*)((char*)gi->out_data_ptr + y * gi->rowbytes_out);
-	int src_y = y;
-	if (gi->interlace_on && (y + gi->frame_count) % 2 == 0) src_y += (int)gi->interlace_shift;
 	
 	for (int x = 0; x < gi->width; x++) {
 		float nx = (2.0f * x / W) - 1.0f, ny = (2.0f * y / H) - 1.0f;
 		float r2 = nx * nx + ny * ny;
-		float srcX = (float)x, srcY = (float)src_y;
+		float srcX = (float)x, srcY = (float)y;
 		
 		if (gi->curvature > 0.0f) {
 			float distort = 1.0f + gi->curvature * 0.25f * r2;
@@ -49,7 +47,7 @@ static void ProcessRow8(const CRTInfo* gi, int y) {
 		if (gi->rgb_amt > 0.0f) {
 			float amt = gi->rgb_amt;
 			if (gi->rgb_mode == 0) {
-				int xMod = x % 3;
+				int xMod = (int)srcX % 3;
 				if (xMod == 0) { fG *= (1.0f - 0.5f*amt); fB *= (1.0f - 0.5f*amt); }
 				else if (xMod == 1) { fR *= (1.0f - 0.5f*amt); fB *= (1.0f - 0.5f*amt); }
 				else { fR *= (1.0f - 0.5f*amt); fG *= (1.0f - 0.5f*amt); }
@@ -69,30 +67,46 @@ static void ProcessRow8(const CRTInfo* gi, int y) {
 
 		if (gi->phosphor_mode > 0) {
 			if (gi->phosphor_mode == 1) {
-				int mx = x % 3;
-				if (mx == 0) rgba = simd_mul_channels(rgba, 1.0f, 1.0f - gi->phosphor_intensity, 1.0f - gi->phosphor_intensity, 1.0f);
-				else if (mx == 1) rgba = simd_mul_channels(rgba, 1.0f - gi->phosphor_intensity, 1.0f, 1.0f - gi->phosphor_intensity, 1.0f);
-				else rgba = simd_mul_channels(rgba, 1.0f - gi->phosphor_intensity, 1.0f - gi->phosphor_intensity, 1.0f, 1.0f);
+				int mx = (int)srcX % 3;
+				float p_off = 1.0f - gi->phosphor_intensity * 0.4f;
+				if (mx == 0) rgba = simd_mul_channels(rgba, 1.0f, p_off, p_off, 1.0f);
+				else if (mx == 1) rgba = simd_mul_channels(rgba, p_off, 1.0f, p_off, 1.0f);
+				else rgba = simd_mul_channels(rgba, p_off, p_off, 1.0f, 1.0f);
 			} else {
-				if ((x + y) % 2 == 0) rgba = simd_mul_scalar(rgba, 1.0f - gi->phosphor_intensity*0.5f);
+				if (((int)srcX + (int)srcY) % 2 == 0) rgba = simd_mul_scalar(rgba, 1.0f - gi->phosphor_intensity*0.5f);
 			}
 		}
 
 		if (gi->scanline_op > 0.0f) {
 			float freq = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
-			float dx = x - gi->anchor_x, dy = y - gi->anchor_y;
+			float dx = srcX - gi->anchor_x, dy = srcY - gi->anchor_y;
 			float rot_y = dx * gi->scan_sin + dy * gi->scan_cos + gi->anchor_y;
 			float val = rot_y + (gi->scanline_phase / 360.0f) * freq + (gi->time * gi->scanline_speed * 50.0f);
 			float phase = fmodf(val, freq) / freq;
 			if (phase < 0.0f) phase += 1.0f;
 			float hard = (phase < 0.5f) ? 1.0f : 0.0f;
-			float soft = fast_cos(phase * 6.28318f) * 0.5f + 0.5f;
+			float soft = fast_cos(phase * 6.2831853f) * 0.5f + 0.5f;
 			float pattern = hard * (1.0f - gi->scanline_soft) + soft * gi->scanline_soft;
 			rgba = simd_mul_scalar(rgba, 1.0f - gi->scanline_op * (1.0f - pattern));
 		}
 
+		if (gi->decay > 0.0f) {
+			float gun_speed_hz = 59.94f;
+			float beam_y = fmodf(gi->time * gun_speed_hz * H, H);
+			float distance = beam_y - srcY;
+			if (distance < 0.0f) distance += H;
+			float decay_constant = 0.05f - gi->decay * 0.045f;
+			float decay_val = expf(-decay_constant * distance) + 0.3f;
+			decay_val = clampf(decay_val, 0.0f, 1.0f);
+			rgba = simd_mul_scalar(rgba, 1.0f - gi->decay + gi->decay * decay_val);
+		}
+
+		if (gi->interlace_on) {
+			if (((int)srcY) % 2 == (gi->frame_count % 2)) rgba = simd_mul_scalar(rgba, 0.8f);
+		}
+
 		if (gi->hum_intensity > 0.0f) {
-			float hum_y = ((float)y / H) * (100.0f / gi->hum_width) * 6.2831853f - gi->time * gi->hum_speed * 6.2831853f;
+			float hum_y = (srcY / H) * (100.0f / gi->hum_width) * 6.2831853f - gi->time * gi->hum_speed * 6.2831853f;
 			rgba = simd_mul_scalar(rgba, 1.0f - gi->hum_intensity * (fast_sin(hum_y) * 0.5f + 0.5f));
 		}
 
@@ -104,7 +118,7 @@ static void ProcessRow8(const CRTInfo* gi, int y) {
 		}
 
 		if (gi->noise_amount > 0.0f) {
-			unsigned int h = simd_hash((unsigned int)x, (unsigned int)y, gi->frame_count);
+			unsigned int h = simd_hash((unsigned int)srcX, (unsigned int)srcY, gi->frame_count);
 			float noise = ((float)(h & 0xFFFF) / 65535.0f) - 0.5f;
 			rgba = simd_mul_scalar(rgba, 1.0f + noise * gi->noise_amount);
 		}
@@ -138,13 +152,11 @@ static void ProcessRow8(const CRTInfo* gi, int y) {
 static void ProcessRow16(const CRTInfo* gi, int y) {
 	float W = (float)gi->width, H = (float)gi->height;
 	PF_Pixel16* out_row = (PF_Pixel16*)((char*)gi->out_data_ptr + y * gi->rowbytes_out);
-	int src_y = y;
-	if (gi->interlace_on && (y + gi->frame_count) % 2 == 0) src_y += (int)gi->interlace_shift;
 	
 	for (int x = 0; x < gi->width; x++) {
 		float nx = (2.0f * x / W) - 1.0f, ny = (2.0f * y / H) - 1.0f;
 		float r2 = nx * nx + ny * ny;
-		float srcX = (float)x, srcY = (float)src_y;
+		float srcX = (float)x, srcY = (float)y;
 		
 		if (gi->curvature > 0.0f) {
 			float distort = 1.0f + gi->curvature * 0.25f * r2;
@@ -166,7 +178,7 @@ static void ProcessRow16(const CRTInfo* gi, int y) {
 		if (gi->rgb_amt > 0.0f) {
 			float amt = gi->rgb_amt;
 			if (gi->rgb_mode == 0) {
-				int xMod = x % 3;
+				int xMod = (int)srcX % 3;
 				if (xMod == 0) { fG *= (1.0f - 0.5f*amt); fB *= (1.0f - 0.5f*amt); }
 				else if (xMod == 1) { fR *= (1.0f - 0.5f*amt); fB *= (1.0f - 0.5f*amt); }
 				else { fR *= (1.0f - 0.5f*amt); fG *= (1.0f - 0.5f*amt); }
@@ -186,30 +198,46 @@ static void ProcessRow16(const CRTInfo* gi, int y) {
 
 		if (gi->phosphor_mode > 0) {
 			if (gi->phosphor_mode == 1) {
-				int mx = x % 3;
-				if (mx == 0) rgba = simd_mul_channels(rgba, 1.0f, 1.0f - gi->phosphor_intensity, 1.0f - gi->phosphor_intensity, 1.0f);
-				else if (mx == 1) rgba = simd_mul_channels(rgba, 1.0f - gi->phosphor_intensity, 1.0f, 1.0f - gi->phosphor_intensity, 1.0f);
-				else rgba = simd_mul_channels(rgba, 1.0f - gi->phosphor_intensity, 1.0f - gi->phosphor_intensity, 1.0f, 1.0f);
+				int mx = (int)srcX % 3;
+				float p_off = 1.0f - gi->phosphor_intensity * 0.4f;
+				if (mx == 0) rgba = simd_mul_channels(rgba, 1.0f, p_off, p_off, 1.0f);
+				else if (mx == 1) rgba = simd_mul_channels(rgba, p_off, 1.0f, p_off, 1.0f);
+				else rgba = simd_mul_channels(rgba, p_off, p_off, 1.0f, 1.0f);
 			} else {
-				if ((x + y) % 2 == 0) rgba = simd_mul_scalar(rgba, 1.0f - gi->phosphor_intensity*0.5f);
+				if (((int)srcX + (int)srcY) % 2 == 0) rgba = simd_mul_scalar(rgba, 1.0f - gi->phosphor_intensity*0.5f);
 			}
 		}
 
 		if (gi->scanline_op > 0.0f) {
 			float freq = gi->scanline_freq < 1.0f ? 1.0f : gi->scanline_freq;
-			float dx = x - gi->anchor_x, dy = y - gi->anchor_y;
+			float dx = srcX - gi->anchor_x, dy = srcY - gi->anchor_y;
 			float rot_y = dx * gi->scan_sin + dy * gi->scan_cos + gi->anchor_y;
 			float val = rot_y + (gi->scanline_phase / 360.0f) * freq + (gi->time * gi->scanline_speed * 50.0f);
 			float phase = fmodf(val, freq) / freq;
 			if (phase < 0.0f) phase += 1.0f;
 			float hard = (phase < 0.5f) ? 1.0f : 0.0f;
-			float soft = fast_cos(phase * 6.28318f) * 0.5f + 0.5f;
+			float soft = fast_cos(phase * 6.2831853f) * 0.5f + 0.5f;
 			float pattern = hard * (1.0f - gi->scanline_soft) + soft * gi->scanline_soft;
 			rgba = simd_mul_scalar(rgba, 1.0f - gi->scanline_op * (1.0f - pattern));
 		}
 
+		if (gi->decay > 0.0f) {
+			float gun_speed_hz = 59.94f;
+			float beam_y = fmodf(gi->time * gun_speed_hz * H, H);
+			float distance = beam_y - srcY;
+			if (distance < 0.0f) distance += H;
+			float decay_constant = 0.05f - gi->decay * 0.045f;
+			float decay_val = expf(-decay_constant * distance) + 0.3f;
+			decay_val = clampf(decay_val, 0.0f, 1.0f);
+			rgba = simd_mul_scalar(rgba, 1.0f - gi->decay + gi->decay * decay_val);
+		}
+
+		if (gi->interlace_on) {
+			if (((int)srcY) % 2 == (gi->frame_count % 2)) rgba = simd_mul_scalar(rgba, 0.8f);
+		}
+
 		if (gi->hum_intensity > 0.0f) {
-			float hum_y = ((float)y / H) * (100.0f / gi->hum_width) * 6.2831853f - gi->time * gi->hum_speed * 6.2831853f;
+			float hum_y = (srcY / H) * (100.0f / gi->hum_width) * 6.2831853f - gi->time * gi->hum_speed * 6.2831853f;
 			rgba = simd_mul_scalar(rgba, 1.0f - gi->hum_intensity * (fast_sin(hum_y) * 0.5f + 0.5f));
 		}
 
@@ -221,7 +249,7 @@ static void ProcessRow16(const CRTInfo* gi, int y) {
 		}
 
 		if (gi->noise_amount > 0.0f) {
-			unsigned int h = simd_hash((unsigned int)x, (unsigned int)y, gi->frame_count);
+			unsigned int h = simd_hash((unsigned int)srcX, (unsigned int)srcY, gi->frame_count);
 			float noise = ((float)(h & 0xFFFF) / 65535.0f) - 0.5f;
 			rgba = simd_mul_scalar(rgba, 1.0f + noise * gi->noise_amount);
 		}
