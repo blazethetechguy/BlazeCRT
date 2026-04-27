@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef AE_OS_WIN
+#ifdef _WIN32
 #include <Windows.h>
 #endif
 
